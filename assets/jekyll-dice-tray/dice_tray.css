@@ -39,6 +39,10 @@
   max-height: 360px;
 }
 
+#jekyll-dice-tray[data-expanded="false"] .jdt-body {
+  display: none;
+}
+
 #jekyll-dice-tray .jdt-clue {
   padding: 10px 12px 0 12px;
   color: rgba(0, 0, 0, 0.55);

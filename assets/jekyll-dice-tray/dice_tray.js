@@ -122,7 +122,10 @@
 
     function setExpanded(expanded) {
       toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+      root.setAttribute("data-expanded", expanded ? "true" : "false");
+      // Some themes override [hidden], so enforce display too.
       body.hidden = !expanded;
+      body.style.display = expanded ? "" : "none";
       saveBool(STORAGE_EXPANDED, expanded);
       if (expanded) {
         setTimeout(function () {
@@ -151,10 +154,6 @@
       saveHistory(history);
     }
 
-    function addSystemEntry(title, body) {
-      return addSystemEntry(title, body, nowTime());
-    }
-
     function addSystemEntry(title, body, timeStr) {
       var entry = el("div", { class: "jdt-entry" });
       entry.appendChild(el("div", { class: "jdt-expr" }, title));
@@ -164,10 +163,6 @@
       log.scrollTop = log.scrollHeight;
 
       pushHistory({ kind: "system", title: title, body: body, time: timeStr });
-    }
-
-    function addRollEntry(expr, total, rolls, mod) {
-      return addRollEntry(expr, total, rolls, mod, nowTime());
     }
 
     function addRollEntry(expr, total, rolls, mod, timeStr) {
@@ -191,7 +186,11 @@
     }
 
     function showHelp() {
-      addSystemEntry("Usage: 1d6, d4, 2d8+1", "Click linked dice like 1d20+5 in the docs to roll here. Commands: /help");
+      addSystemEntry(
+        "Usage: 1d6, d4, 2d8+1",
+        "Click linked dice like 1d20+5 in the docs to roll here. Commands: /help",
+        nowTime()
+      );
     }
 
     function doRoll(raw) {
@@ -199,13 +198,13 @@
       if (p.kind === "empty") return;
       if (p.kind === "help") return showHelp();
       if (p.kind !== "roll") {
-        addSystemEntry("Unrecognized roll: " + p.raw, "Try: 1d6, d4, 2d8+1 or /help");
+        addSystemEntry("Unrecognized roll: " + p.raw, "Try: 1d6, d4, 2d8+1 or /help", nowTime());
         return;
       }
 
       var r = rollDice(p.count, p.sides);
       var total = r.total + p.mod;
-      addRollEntry(p.normalized, total, r.rolls, p.mod);
+      addRollEntry(p.normalized, total, r.rolls, p.mod, nowTime());
     }
 
     toggle.addEventListener("click", function () {
