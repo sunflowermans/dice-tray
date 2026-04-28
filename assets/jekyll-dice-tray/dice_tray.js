@@ -298,7 +298,7 @@
       if (!leftIsWinner) leftSpan.className += " jdt-loser";
       bracket.appendChild(leftSpan);
 
-      bracket.appendChild(el("span", { class: "jdt-vs-sep" }, " | "));
+      bracket.appendChild(el("span", { class: "jdt-vs-sep" }, ", "));
 
       var rightSpan = el("span", { class: "jdt-vs-part" }, rightRolls.join(", "));
       rightSpan.setAttribute("title", rightLabel);
