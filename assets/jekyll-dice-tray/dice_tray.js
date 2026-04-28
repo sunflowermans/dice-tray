@@ -189,14 +189,18 @@
       try {
         // clear dice tray history
         localStorage.removeItem(STORAGE_HISTORY);
+        // clear input history (up-arrow)
+        localStorage.removeItem(STORAGE_INPUT_HISTORY);
       } catch (_) {}
 
       history = [];
+      inputHistory = [];
+      inputHistoryIdx = 0;
       log.innerHTML = "";
 
       // Confirmation (not persisted); keep current expanded/minimized state
       var entry = el("div", { class: "jdt-entry", title: "/clear" });
-      entry.appendChild(el("div", { class: "jdt-expr" }, "Cleared dice tray history."));
+      entry.appendChild(el("div", { class: "jdt-expr" }, "Cleared dice tray history and input history."));
       entry.appendChild(el("div", { class: "jdt-details" }, nowTime()));
       log.appendChild(entry);
       log.scrollTop = log.scrollHeight;
