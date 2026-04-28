@@ -1,0 +1,137 @@
+.jekyll-dice-tray-hidden {
+  display: none !important;
+}
+
+#jekyll-dice-tray {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+}
+
+#jekyll-dice-tray .jdt-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#jekyll-dice-tray .jdt-toggle {
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+#jekyll-dice-tray .jdt-body {
+  margin-top: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+#jekyll-dice-tray .jdt-clue {
+  padding: 10px 12px 0 12px;
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+#jekyll-dice-tray .jdt-clue code {
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1px 4px;
+  border-radius: 6px;
+}
+
+#jekyll-dice-tray .jdt-input {
+  width: calc(100% - 24px);
+  margin: 10px 12px 10px 12px;
+  padding: 10px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+#jekyll-dice-tray .jdt-log {
+  max-height: 260px;
+  overflow: auto;
+  padding: 0 12px 12px 12px;
+}
+
+#jekyll-dice-tray .jdt-entry {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 8px 0;
+  font-size: 13px;
+}
+
+#jekyll-dice-tray .jdt-entry:first-child {
+  border-top: none;
+}
+
+#jekyll-dice-tray .jdt-entry .jdt-expr {
+  color: rgba(0, 0, 0, 0.6);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+#jekyll-dice-tray .jdt-entry .jdt-total {
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+#jekyll-dice-tray .jdt-entry .jdt-details {
+  margin-top: 4px;
+  color: rgba(0, 0, 0, 0.55);
+  font-size: 12px;
+}
+
+a.dice-tray-roll {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  #jekyll-dice-tray .jdt-toggle {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(22, 22, 22, 0.96);
+    color: #f2f2f2;
+  }
+
+  #jekyll-dice-tray .jdt-body {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(22, 22, 22, 0.98);
+  }
+
+  #jekyll-dice-tray .jdt-clue {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  #jekyll-dice-tray .jdt-clue code {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  #jekyll-dice-tray .jdt-input {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #f2f2f2;
+  }
+
+  #jekyll-dice-tray .jdt-entry {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
+  #jekyll-dice-tray .jdt-entry .jdt-expr {
+    color: rgba(255, 255, 255, 0.65);
+  }
+
+  #jekyll-dice-tray .jdt-entry .jdt-details {
+    color: rgba(255, 255, 255, 0.6);
+  }
+}
+
