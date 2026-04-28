@@ -32,30 +32,3 @@ dice_tray:
   inject_tray: true
   link_dice_in_markdown: true
 ```
-
-## Test in the Cairn docs project
-
-In `~/projects/cairn` (docs site), add this plugin as a path gem.
-
-1) Edit `~/projects/cairn/Gemfile` (or the docs Gemfile if it’s in a subdir) and add:
-
-```ruby
-gem "jekyll-dice-tray", path: "/home/chris/projects/dice-tray"
-```
-
-2) Add to the docs `_config.yml`:
-
-```yml
-plugins:
-  - jekyll-dice-tray
-```
-
-3) Run:
-
-```bash
-bundle install
-bundle exec jekyll serve
-```
-
-Now any text like `1d20+1` in your markdown should render as a clickable roll, and the tray should appear bottom-right.
-

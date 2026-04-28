@@ -62,9 +62,9 @@ module Jekyll
             </div>
             <div class="jdt-body" hidden>
               <div class="jdt-clue">Type <code>1d20+5</code> or <code>/help</code>, then press Enter.</div>
+              <div class="jdt-log" role="log" aria-label="Dice roll log"></div>
               <input class="jdt-input" type="text" inputmode="text" autocomplete="off" spellcheck="false"
                 placeholder="Roll: 1d6, d4, 2d8+1, /help" />
-              <div class="jdt-log" role="log" aria-label="Dice roll log"></div>
             </div>
           </div>
         HTML

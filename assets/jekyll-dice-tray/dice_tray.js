@@ -1,6 +1,10 @@
 (function () {
   "use strict";
 
+  var STORAGE_PREFIX = "jekyll_dice_tray:";
+  var STORAGE_EXPANDED = STORAGE_PREFIX + "expanded";
+  var STORAGE_HISTORY = STORAGE_PREFIX + "history_v1";
+
   function qs(sel, root) {
     return (root || document).querySelector(sel);
   }
@@ -81,9 +85,45 @@
     var input = qs(".jdt-input", root);
     var log = qs(".jdt-log", root);
 
+    function loadBool(key, fallback) {
+      try {
+        var v = localStorage.getItem(key);
+        if (v === null) return fallback;
+        return v === "true";
+      } catch (_) {
+        return fallback;
+      }
+    }
+
+    function saveBool(key, val) {
+      try {
+        localStorage.setItem(key, val ? "true" : "false");
+      } catch (_) {}
+    }
+
+    function loadHistory() {
+      try {
+        var raw = localStorage.getItem(STORAGE_HISTORY);
+        if (!raw) return [];
+        var parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function saveHistory(items) {
+      try {
+        localStorage.setItem(STORAGE_HISTORY, JSON.stringify(items));
+      } catch (_) {}
+    }
+
+    var history = loadHistory();
+
     function setExpanded(expanded) {
       toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
       body.hidden = !expanded;
+      saveBool(STORAGE_EXPANDED, expanded);
       if (expanded) {
         setTimeout(function () {
           input && input.focus();
@@ -91,29 +131,67 @@
       }
     }
 
-    function addEntry(expr, total, details, isSystem) {
-      var entry = el("div", { class: "jdt-entry" });
-      var line = el("div");
-      line.appendChild(el("span", { class: "jdt-expr" }, (isSystem ? "" : expr) + (isSystem ? "" : " ")));
-      if (isSystem) {
-        line.appendChild(el("span", { class: "jdt-expr" }, expr));
-      } else {
-        line.appendChild(el("span", { class: "jdt-total" }, String(total)));
-      }
-      line.appendChild(el("span", { class: "jdt-details" }, "  " + nowTime()));
-      entry.appendChild(line);
-      if (details) entry.appendChild(el("div", { class: "jdt-details" }, details));
-      log.appendChild(entry); // newest at bottom
+    function renderHistory() {
+      log.innerHTML = "";
+      history.forEach(function (item) {
+        if (!item || typeof item !== "object") return;
+        if (item.kind === "system") {
+          addSystemEntry(item.title || "", item.body || "", item.time || "");
+        } else if (item.kind === "roll") {
+          addRollEntry(item.expr || "", item.total, item.rolls || [], item.mod || 0, item.time || "");
+        }
+      });
       log.scrollTop = log.scrollHeight;
     }
 
+    function pushHistory(item) {
+      history.push(item);
+      // keep it bounded
+      if (history.length > 200) history = history.slice(history.length - 200);
+      saveHistory(history);
+    }
+
+    function addSystemEntry(title, body) {
+      return addSystemEntry(title, body, nowTime());
+    }
+
+    function addSystemEntry(title, body, timeStr) {
+      var entry = el("div", { class: "jdt-entry" });
+      entry.appendChild(el("div", { class: "jdt-expr" }, title));
+      if (body) entry.appendChild(el("div", { class: "jdt-details" }, body));
+      entry.appendChild(el("div", { class: "jdt-details" }, timeStr));
+      log.appendChild(entry); // newest at bottom
+      log.scrollTop = log.scrollHeight;
+
+      pushHistory({ kind: "system", title: title, body: body, time: timeStr });
+    }
+
+    function addRollEntry(expr, total, rolls, mod) {
+      return addRollEntry(expr, total, rolls, mod, nowTime());
+    }
+
+    function addRollEntry(expr, total, rolls, mod, timeStr) {
+      var entry = el("div", { class: "jdt-entry" });
+      entry.appendChild(el("div", { class: "jdt-expr" }, expr));
+
+      var result = el("div", { class: "jdt-result" });
+      result.appendChild(el("strong", null, String(total)));
+      var rollsText = "[" + rolls.join(", ") + "]";
+      if (mod) {
+        rollsText += " " + (mod > 0 ? "+" + mod : "" + mod);
+      }
+      result.appendChild(el("span", { class: "jdt-rolls" }, " " + rollsText));
+      entry.appendChild(result);
+
+      entry.appendChild(el("div", { class: "jdt-details" }, timeStr));
+      log.appendChild(entry); // newest at bottom
+      log.scrollTop = log.scrollHeight;
+
+      pushHistory({ kind: "roll", expr: expr, total: total, rolls: rolls, mod: mod, time: timeStr });
+    }
+
     function showHelp() {
-      addEntry(
-        "Usage: 1d6, d4, 2d8+1",
-        null,
-        "Click linked dice like 1d20+5 in the docs to roll here. Commands: /help",
-        true
-      );
+      addSystemEntry("Usage: 1d6, d4, 2d8+1", "Click linked dice like 1d20+5 in the docs to roll here. Commands: /help");
     }
 
     function doRoll(raw) {
@@ -121,15 +199,13 @@
       if (p.kind === "empty") return;
       if (p.kind === "help") return showHelp();
       if (p.kind !== "roll") {
-        addEntry("Unrecognized roll: " + p.raw, null, "Try: 1d6, d4, 2d8+1 or /help", true);
+        addSystemEntry("Unrecognized roll: " + p.raw, "Try: 1d6, d4, 2d8+1 or /help");
         return;
       }
 
       var r = rollDice(p.count, p.sides);
       var total = r.total + p.mod;
-      var details = r.rolls.join(", ");
-      if (p.mod) details = details + "  " + (p.mod > 0 ? "+" + p.mod : "" + p.mod);
-      addEntry(p.normalized, total, details, false);
+      addRollEntry(p.normalized, total, r.rolls, p.mod);
     }
 
     toggle.addEventListener("click", function () {
@@ -143,6 +219,11 @@
       input.value = "";
       setExpanded(true);
       doRoll(v);
+    });
+
+    input.addEventListener("keydown", function (e) {
+      if (e.key !== "Escape") return;
+      setExpanded(false);
     });
 
     document.addEventListener("click", function (e) {
@@ -169,8 +250,9 @@
       },
     };
 
-    // start minimized
-    setExpanded(false);
+    // hydrate history and persisted expanded state (default minimized)
+    renderHistory();
+    setExpanded(loadBool(STORAGE_EXPANDED, false));
   }
 
   function boot() {
