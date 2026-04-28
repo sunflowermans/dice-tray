@@ -106,6 +106,10 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
+#jekyll-dice-tray .jdt-result .jdt-loser {
+  color: rgba(0, 0, 0, 0.42);
+}
+
 #jekyll-dice-tray .jdt-entry .jdt-details {
   margin-top: 4px;
   color: rgba(0, 0, 0, 0.55);
@@ -162,6 +166,10 @@ a.dice-tray-roll:visited {
 
   #jekyll-dice-tray .jdt-result .jdt-rolls {
     color: rgba(255, 255, 255, 0.65);
+  }
+
+  #jekyll-dice-tray .jdt-result .jdt-loser {
+    color: rgba(255, 255, 255, 0.45);
   }
 }
 

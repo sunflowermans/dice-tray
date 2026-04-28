@@ -48,7 +48,46 @@
     if (s === "/help") return { kind: "help" };
     if (s === "/clear") return { kind: "clear" };
 
-    var m = s.match(/^(\d{0,3})d(\d{1,4})([+-]\d{1,5})?$/i);
+    // Allow whitespace variations like "d20 + 2"
+    var compact = s.replace(/\s+/g, "");
+
+    // Special: "d12+d6(+2)" means roll both, keep higher total, then apply modifier.
+    // Also supports "2d12+1d6+2" etc.
+    var best = compact.match(/^(\d{0,3})d(\d{1,4})\+(\d{0,3})d(\d{1,4})([+-]\d{1,5})?$/i);
+    if (best) {
+      var c1 = best[1] ? parseInt(best[1], 10) : 1;
+      var s1 = parseInt(best[2], 10);
+      var c2 = best[3] ? parseInt(best[3], 10) : 1;
+      var s2 = parseInt(best[4], 10);
+      var modB = best[5] ? parseInt(best[5], 10) : 0;
+
+      if (!Number.isFinite(c1) || !Number.isFinite(s1) || !Number.isFinite(c2) || !Number.isFinite(s2) || !Number.isFinite(modB)) {
+        return { kind: "invalid", raw: s };
+      }
+      if (c1 < 1) c1 = 1;
+      if (c1 > 100) c1 = 100;
+      if (s1 < 2) s1 = 2;
+      if (s1 > 10000) s1 = 10000;
+      if (c2 < 1) c2 = 1;
+      if (c2 > 100) c2 = 100;
+      if (s2 < 2) s2 = 2;
+      if (s2 > 10000) s2 = 10000;
+      if (modB < -100000) modB = -100000;
+      if (modB > 100000) modB = 100000;
+
+      var left = String(c1) + "d" + String(s1);
+      var right = String(c2) + "d" + String(s2);
+      var normalizedB = left + "+" + right + (modB ? (modB > 0 ? "+" + modB : "" + modB) : "");
+      return {
+        kind: "bestof2",
+        left: { count: c1, sides: s1 },
+        right: { count: c2, sides: s2 },
+        mod: modB,
+        normalized: normalizedB,
+      };
+    }
+
+    var m = compact.match(/^(\d{0,3})d(\d{1,4})([+-]\d{1,5})?$/i);
     if (!m) return { kind: "invalid", raw: s };
 
     var count = m[1] ? parseInt(m[1], 10) : 1;
@@ -158,6 +197,17 @@
         if (!item || typeof item !== "object") return;
         if (item.kind === "system") {
           addSystemEntry(item.title || "", item.body || "", item.time || "");
+        } else if (item.kind === "bestof2") {
+          addBestOf2Entry(
+            item.expr || "",
+            item.best_total,
+            item.best_rolls || [],
+            item.best_label || "",
+            item.other_rolls || [],
+            item.other_label || "",
+            item.mod || 0,
+            item.time || ""
+          );
         } else if (item.kind === "roll") {
           addRollEntry(item.expr || "", item.total, item.rolls || [], item.mod || 0, item.time || "");
         }
@@ -186,7 +236,7 @@
     function addRollEntry(expr, total, rolls, mod, timeStr) {
       var entry = el("div", { class: "jdt-entry", title: expr });
       // expression
-      // entry.appendChild(el("div", { class: "jdt-expr" }, expr));
+      entry.appendChild(el("div", { class: "jdt-expr" }, expr));
 
       var result = el("div", { class: "jdt-result" });
       result.appendChild(el("strong", null, String(total)));
@@ -200,11 +250,49 @@
       entry.appendChild(result);
 
       // time
-      // entry.appendChild(el("div", { class: "jdt-details" }, timeStr));
+      entry.appendChild(el("div", { class: "jdt-details" }, timeStr));
       log.appendChild(entry); // newest at bottom
       log.scrollTop = log.scrollHeight;
 
       pushHistory({ kind: "roll", expr: expr, total: total, rolls: rolls, mod: mod, time: timeStr });
+    }
+
+    function addBestOf2Entry(expr, bestTotal, bestRolls, bestLabel, otherRolls, otherLabel, mod, timeStr) {
+      var entry = el("div", { class: "jdt-entry", title: expr });
+      entry.appendChild(el("div", { class: "jdt-expr" }, expr));
+
+      var result = el("div", { class: "jdt-result" });
+      result.appendChild(el("strong", null, String(bestTotal)));
+
+      var bestSpan = el("span", { class: "jdt-rolls" }, " [" + bestRolls.join(", ") + "]");
+      bestSpan.setAttribute("title", bestLabel);
+      result.appendChild(bestSpan);
+
+      var otherSpan = el("span", { class: "jdt-rolls jdt-loser" }, " [" + otherRolls.join(", ") + "]");
+      otherSpan.setAttribute("title", otherLabel);
+      result.appendChild(otherSpan);
+
+      if (mod) {
+        result.appendChild(el("span", { class: "jdt-rolls" }, " " + (mod > 0 ? "+" + mod : "" + mod)));
+      }
+
+      entry.appendChild(result);
+      entry.appendChild(el("div", { class: "jdt-details" }, timeStr));
+
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+
+      pushHistory({
+        kind: "bestof2",
+        expr: expr,
+        best_total: bestTotal,
+        best_rolls: bestRolls,
+        best_label: bestLabel,
+        other_rolls: otherRolls,
+        other_label: otherLabel,
+        mod: mod,
+        time: timeStr,
+      });
     }
 
     function showHelp() {
@@ -220,8 +308,26 @@
       if (p.kind === "empty") return;
       if (p.kind === "help") return showHelp();
       if (p.kind === "clear") return clearStorageAndUi();
-      if (p.kind !== "roll") {
+      if (p.kind !== "roll" && p.kind !== "bestof2") {
         addSystemEntry("Unrecognized roll: " + p.raw, "Try: 1d6, d4, 2d8+1 or /help", nowTime());
+        return;
+      }
+
+      if (p.kind === "bestof2") {
+        var left = rollDice(p.left.count, p.left.sides);
+        var right = rollDice(p.right.count, p.right.sides);
+        var leftLabel = String(p.left.count) + "d" + String(p.left.sides);
+        var rightLabel = String(p.right.count) + "d" + String(p.right.sides);
+
+        var leftWins = left.total >= right.total;
+        var bestRolls = leftWins ? left.rolls : right.rolls;
+        var otherRolls = leftWins ? right.rolls : left.rolls;
+        var bestLabel = leftWins ? leftLabel : rightLabel;
+        var otherLabel = leftWins ? rightLabel : leftLabel;
+        var bestPreMod = leftWins ? left.total : right.total;
+        var bestTotal = bestPreMod + p.mod;
+
+        addBestOf2Entry(p.normalized, bestTotal, bestRolls, bestLabel, otherRolls, otherLabel, p.mod, nowTime());
         return;
       }
 
