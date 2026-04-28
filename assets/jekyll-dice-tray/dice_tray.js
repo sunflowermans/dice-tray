@@ -46,6 +46,7 @@
     var s = String(input || "").trim();
     if (!s) return { kind: "empty" };
     if (s === "/help") return { kind: "help" };
+    if (s === "/clear") return { kind: "clear" };
 
     var m = s.match(/^(\d{0,3})d(\d{1,4})([+-]\d{1,5})?$/i);
     if (!m) return { kind: "invalid", raw: s };
@@ -120,6 +121,23 @@
 
     var history = loadHistory();
 
+    function clearStorageAndUi() {
+      try {
+        // clear dice tray history
+        localStorage.removeItem(STORAGE_HISTORY);
+      } catch (_) {}
+
+      history = [];
+      log.innerHTML = "";
+
+      // Confirmation (not persisted); keep current expanded/minimized state
+      var entry = el("div", { class: "jdt-entry", title: "/clear" });
+      entry.appendChild(el("div", { class: "jdt-expr" }, "Cleared dice tray history."));
+      entry.appendChild(el("div", { class: "jdt-details" }, nowTime()));
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }
+
     function setExpanded(expanded) {
       toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
       root.setAttribute("data-expanded", expanded ? "true" : "false");
@@ -166,8 +184,9 @@
     }
 
     function addRollEntry(expr, total, rolls, mod, timeStr) {
-      var entry = el("div", { class: "jdt-entry" });
-      entry.appendChild(el("div", { class: "jdt-expr" }, expr));
+      var entry = el("div", { class: "jdt-entry", title: expr });
+      // expression
+      // entry.appendChild(el("div", { class: "jdt-expr" }, expr));
 
       var result = el("div", { class: "jdt-result" });
       result.appendChild(el("strong", null, String(total)));
@@ -176,9 +195,12 @@
         rollsText += " " + (mod > 0 ? "+" + mod : "" + mod);
       }
       result.appendChild(el("span", { class: "jdt-rolls" }, " " + rollsText));
+
+      // result
       entry.appendChild(result);
 
-      entry.appendChild(el("div", { class: "jdt-details" }, timeStr));
+      // time
+      // entry.appendChild(el("div", { class: "jdt-details" }, timeStr));
       log.appendChild(entry); // newest at bottom
       log.scrollTop = log.scrollHeight;
 
@@ -188,7 +210,7 @@
     function showHelp() {
       addSystemEntry(
         "Usage: 1d6, d4, 2d8+1",
-        "Click linked dice like 1d20+5 in the docs to roll here. Commands: /help",
+        "Click linked dice like 1d20+5 in the docs to roll here. Commands: /help, /clear",
         nowTime()
       );
     }
@@ -197,6 +219,7 @@
       var p = parseExpr(raw);
       if (p.kind === "empty") return;
       if (p.kind === "help") return showHelp();
+      if (p.kind === "clear") return clearStorageAndUi();
       if (p.kind !== "roll") {
         addSystemEntry("Unrecognized roll: " + p.raw, "Try: 1d6, d4, 2d8+1 or /help", nowTime());
         return;
