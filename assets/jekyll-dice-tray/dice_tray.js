@@ -341,7 +341,7 @@
     function showHelp() {
       addSystemEntry(
         "Usage: 1d6, d4, 2d8+1",
-        "Click linked dice like 1d20+5 in the docs to roll here. Commands: /help, /clear",
+        "Click linked dice like 1d20+5 or bracket modifiers like [+1] (rolls d20+1). Commands: /help, /clear",
         nowTime()
       );
     }
