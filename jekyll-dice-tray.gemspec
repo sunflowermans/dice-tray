@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.email = []
 
   spec.summary = "Jekyll plugin that adds an overlay dice tray and clickable dice rolls."
-  spec.homepage = "https://github.com/directsun/jekyll-dice-tray"
+  spec.homepage = "https://github.com/sunflowermans/dice-tray"
   spec.license = "MIT"
 
   spec.required_ruby_version = ">= 3.0"
