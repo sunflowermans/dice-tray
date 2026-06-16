@@ -5,7 +5,8 @@ A Jekyll plugin gem that:
 - Adds an overlay dice tray that accepts dice rolling input
 - Recognizes dice expressions in rendered pages like `d4`, `1d6`, `1d20+1` and turns them into clickable links that roll in the tray
 - Recognizes THAC0-style bracket modifiers like `THAC0 18 [+1]` or `18 [+1]` in a THAC0 table row/column; the `+1` inside the brackets is clickable and rolls `d20+1` (other `[+n]` text is left alone)
-- Rolls from table dice links show the roll result plus each column header and cell value from that table row
+- Recognizes chance notation like `2-in-6` (roll a d6; 1–2 succeed in green, higher results fail in red)
+- Clicking a lookup-table die in the header row (e.g. `1d12`) rolls and shows the matching encounter row
 - Persists input history, result history, minimize status
 - `/help` - help
 - `/clear` - clears results and input history

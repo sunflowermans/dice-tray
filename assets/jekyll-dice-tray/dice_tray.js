@@ -93,6 +93,28 @@
       };
     }
 
+    var chance = compact.match(/^(\d{1,3})-in-(\d{1,4})$/i);
+    if (chance) {
+      var successOn = parseInt(chance[1], 10);
+      var sides = parseInt(chance[2], 10);
+
+      if (!Number.isFinite(successOn) || !Number.isFinite(sides)) {
+        return { kind: "invalid", raw: s };
+      }
+      if (successOn < 1) successOn = 1;
+      if (successOn > 100) successOn = 100;
+      if (sides < 2) sides = 2;
+      if (sides > 10000) sides = 10000;
+      if (successOn > sides) return { kind: "invalid", raw: s };
+
+      return {
+        kind: "chance",
+        success_on: successOn,
+        sides: sides,
+        normalized: String(successOn) + "-in-" + String(sides),
+      };
+    }
+
     var m = compact.match(/^(\d{0,3})d(\d{1,4})([+-]\d{1,5})?$/i);
     if (!m) return { kind: "invalid", raw: s };
 
@@ -353,6 +375,17 @@
             item.table_context || null,
             true
           );
+        } else if (item.kind === "chance") {
+          addChanceEntry(
+            item.expr || "",
+            item.roll,
+            item.success_on,
+            item.sides,
+            !!item.success,
+            item.time || "",
+            item.table_context || null,
+            true
+          );
         } else if (item.kind === "roll") {
           addRollEntry(
             item.expr || "",
@@ -384,6 +417,39 @@
       log.scrollTop = log.scrollHeight;
 
       pushHistory({ kind: "system", title: title, body: body, time: timeStr });
+    }
+
+    function addChanceEntry(expr, roll, successOn, sides, success, timeStr, tableContext, skipHistory) {
+      var entry = el("div", { class: "jdt-entry", title: expr });
+      var colorClass = success ? "jdt-success" : "jdt-failure";
+      var result = el("div", { class: "jdt-result" });
+
+      result.appendChild(el("strong", { class: colorClass }, String(roll)));
+
+      var bracket = el("span", { class: "jdt-rolls" }, " [");
+      bracket.appendChild(el("span", { class: colorClass }, String(roll)));
+      bracket.appendChild(el("span", null, "]"));
+      result.appendChild(bracket);
+
+      entry.appendChild(result);
+      appendTableContext(entry, tableContext);
+
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+
+      if (skipHistory) return;
+
+      var item = {
+        kind: "chance",
+        expr: expr,
+        roll: roll,
+        success_on: successOn,
+        sides: sides,
+        success: success,
+        time: timeStr,
+      };
+      if (tableContext) item.table_context = tableContext;
+      pushHistory(item);
     }
 
     function addRollEntry(expr, total, rolls, mod, timeStr, tableContext, skipHistory) {
@@ -467,8 +533,8 @@
 
     function showHelp() {
       addSystemEntry(
-        "Usage: 1d6, d4, 2d8+1",
-        "Click linked dice like 1d20+5 or bracket modifiers like [+1] (rolls d20+1). Clicking a table die (e.g. 1d12) shows the matching row. Commands: /help, /clear",
+        "Usage: 1d6, d4, 2d8+1, 2-in-6",
+        "Click linked dice like 1d20+5, chance like 2-in-6 (roll d6, 1-2 succeed), or bracket modifiers like [+1] (rolls d20+1). Clicking a table die (e.g. 1d12) shows the matching row. Commands: /help, /clear",
         nowTime()
       );
     }
@@ -480,8 +546,24 @@
       if (p.kind === "empty") return;
       if (p.kind === "help") return showHelp();
       if (p.kind === "clear") return clearStorageAndUi();
-      if (p.kind !== "roll" && p.kind !== "bestof2") {
-        addSystemEntry("Unrecognized roll: " + p.raw, "Try: 1d6, d4, 2d8+1 or /help", nowTime());
+      if (p.kind !== "roll" && p.kind !== "bestof2" && p.kind !== "chance") {
+        addSystemEntry("Unrecognized roll: " + p.raw, "Try: 1d6, d4, 2-in-6, 2d8+1 or /help", nowTime());
+        return;
+      }
+
+      if (p.kind === "chance") {
+        var chanceRoll = rollDice(1, p.sides);
+        var roll = chanceRoll.rolls[0];
+        var success = roll <= p.success_on;
+        addChanceEntry(
+          p.normalized,
+          roll,
+          p.success_on,
+          p.sides,
+          success,
+          nowTime(),
+          getLookupTableContext(anchor, roll)
+        );
         return;
       }
 

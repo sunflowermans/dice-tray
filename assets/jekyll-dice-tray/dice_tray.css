@@ -114,6 +114,14 @@
   color: rgba(0, 0, 0, 0.45);
 }
 
+#jekyll-dice-tray .jdt-success {
+  color: #1a7f37;
+}
+
+#jekyll-dice-tray .jdt-failure {
+  color: #cf222e;
+}
+
 #jekyll-dice-tray .jdt-entry .jdt-details {
   margin-top: 4px;
   color: rgba(0, 0, 0, 0.55);
@@ -241,6 +249,14 @@ a.dice-tray-roll:visited {
 
   #jekyll-dice-tray .jdt-result .jdt-vs-sep {
     color: rgba(255, 255, 255, 0.48);
+  }
+
+  #jekyll-dice-tray .jdt-success {
+    color: #3fb950;
+  }
+
+  #jekyll-dice-tray .jdt-failure {
+    color: #f85149;
   }
 }
 

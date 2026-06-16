@@ -14,6 +14,14 @@ module Jekyll
         (?![A-Za-z0-9_])
       /x
 
+      CHANCE_RE = /
+        (?<![A-Za-z0-9_])
+        \d{1,3}
+        \s*-\s*in\s*-\s*
+        \d{1,4}
+        (?![A-Za-z0-9_])
+      /ix
+
       THAC0_WORD_RE = /THAC0/i
 
       BRACKET_INNER_RE = /
@@ -100,6 +108,17 @@ module Jekyll
             start: m.begin(0),
             end: m.end(0),
             expr: m[0],
+            label_start: m.begin(0),
+            label_end: m.end(0),
+          }
+        end
+
+        text.to_enum(:scan, CHANCE_RE).each do
+          m = Regexp.last_match
+          matches << {
+            start: m.begin(0),
+            end: m.end(0),
+            expr: m[0].gsub(/\s+/, ""),
             label_start: m.begin(0),
             label_end: m.end(0),
           }
