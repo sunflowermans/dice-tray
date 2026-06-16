@@ -126,6 +126,104 @@
   }
 
   function mountTray(root) {
+    function normalizeCellText(node) {
+      return String(node && node.textContent ? node.textContent : "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function findTableHeaderRow(table) {
+      if (!table) return null;
+      var thead = table.querySelector("thead");
+      if (thead) {
+        var theadRows = thead.querySelectorAll("tr");
+        if (theadRows.length) return theadRows[theadRows.length - 1];
+      }
+      var rows = table.querySelectorAll("tr");
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i].querySelector("th")) return rows[i];
+      }
+      return table.querySelector("tr");
+    }
+
+    function firstColumnNumber(row) {
+      if (!row) return null;
+      var cell = row.querySelector("td, th");
+      if (!cell) return null;
+      var text = normalizeCellText(cell);
+      if (!/^\d+$/.test(text)) return null;
+      return parseInt(text, 10);
+    }
+
+    function isLookupTable(table, headerRow) {
+      if (!table || !headerRow) return false;
+      var rows = table.querySelectorAll("tr");
+      var matches = 0;
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i] === headerRow) continue;
+        if (firstColumnNumber(rows[i]) !== null) matches++;
+      }
+      return matches >= 2;
+    }
+
+    function findLookupRow(table, headerRow, rollTotal) {
+      var rows = table.querySelectorAll("tr");
+      for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        if (row === headerRow) continue;
+        var n = firstColumnNumber(row);
+        if (n !== null && n === rollTotal) return row;
+      }
+      return null;
+    }
+
+    function getLookupTableContext(anchor, rollTotal) {
+      if (!anchor || !anchor.closest || rollTotal == null) return null;
+      var cell = anchor.closest("td, th");
+      if (!cell) return null;
+      var clickRow = cell.closest("tr");
+      if (!clickRow) return null;
+      var table = clickRow.closest("table");
+      if (!table) return null;
+
+      var headerRow = findTableHeaderRow(table);
+      if (!headerRow || !headerRow.contains(cell)) return null;
+      if (!isLookupTable(table, headerRow)) return null;
+
+      var matchedRow = findLookupRow(table, headerRow, rollTotal);
+      if (!matchedRow) return null;
+
+      var headerCells = Array.prototype.slice.call(headerRow.querySelectorAll("td, th"));
+      var valueCells = Array.prototype.slice.call(matchedRow.querySelectorAll("td, th"));
+      var columns = [];
+
+      for (var c = 0; c < valueCells.length; c++) {
+        columns.push({
+          header: headerCells[c] ? normalizeCellText(headerCells[c]) : "",
+          value: normalizeCellText(valueCells[c]),
+        });
+      }
+
+      return columns.length ? { columns: columns } : null;
+    }
+
+    function appendTableContext(entry, tableContext) {
+      if (!tableContext || !tableContext.columns || !tableContext.columns.length) return;
+
+      var ctx = el("div", { class: "jdt-table-context" });
+      tableContext.columns.forEach(function (col) {
+        if (!col || !col.value) return;
+        var line = el("div", { class: "jdt-table-row" });
+        if (col.header) {
+          line.appendChild(el("span", { class: "jdt-table-header" }, col.header));
+          line.appendChild(el("span", { class: "jdt-table-sep" }, ": "));
+        }
+        line.appendChild(el("span", { class: "jdt-table-value" }, col.value));
+        ctx.appendChild(line);
+      });
+      if (ctx.childNodes.length) entry.appendChild(ctx);
+    }
+
     var toggle = qs(".jdt-toggle", root);
     var body = qs(".jdt-body", root);
     var input = qs(".jdt-input", root);
@@ -237,10 +335,20 @@
             item.right_label || "",
             item.mod || 0,
             item.time || "",
-            item.mode || "high"
+            item.mode || "high",
+            item.table_context || null,
+            true
           );
         } else if (item.kind === "roll") {
-          addRollEntry(item.expr || "", item.total, item.rolls || [], item.mod || 0, item.time || "");
+          addRollEntry(
+            item.expr || "",
+            item.total,
+            item.rolls || [],
+            item.mod || 0,
+            item.time || "",
+            item.table_context || null,
+            true
+          );
         }
       });
       log.scrollTop = log.scrollHeight;
@@ -264,10 +372,8 @@
       pushHistory({ kind: "system", title: title, body: body, time: timeStr });
     }
 
-    function addRollEntry(expr, total, rolls, mod, timeStr) {
+    function addRollEntry(expr, total, rolls, mod, timeStr, tableContext, skipHistory) {
       var entry = el("div", { class: "jdt-entry", title: expr });
-      // expression
-      //entry.appendChild(el("div", { class: "jdt-expr" }, expr));
 
       var result = el("div", { class: "jdt-result" });
       result.appendChild(el("strong", null, String(total)));
@@ -277,18 +383,20 @@
       }
       result.appendChild(el("span", { class: "jdt-rolls" }, " " + rollsText));
 
-      // result
       entry.appendChild(result);
+      appendTableContext(entry, tableContext);
 
-      // time
-      //entry.appendChild(el("div", { class: "jdt-details" }, timeStr));
-      log.appendChild(entry); // newest at bottom
+      log.appendChild(entry);
       log.scrollTop = log.scrollHeight;
 
-      pushHistory({ kind: "roll", expr: expr, total: total, rolls: rolls, mod: mod, time: timeStr });
+      if (skipHistory) return;
+
+      var item = { kind: "roll", expr: expr, total: total, rolls: rolls, mod: mod, time: timeStr };
+      if (tableContext) item.table_context = tableContext;
+      pushHistory(item);
     }
 
-    function addBestOf2Entry(expr, chosenTotal, leftRolls, rightRolls, leftIsWinner, leftLabel, rightLabel, mod, timeStr, mode) {
+    function addBestOf2Entry(expr, chosenTotal, leftRolls, rightRolls, leftIsWinner, leftLabel, rightLabel, mod, timeStr, mode, tableContext, skipHistory) {
       var entry = el("div", { class: "jdt-entry", title: expr });
       entry.appendChild(el("div", { class: "jdt-expr" }, expr));
 
@@ -318,12 +426,15 @@
       }
 
       entry.appendChild(result);
+      appendTableContext(entry, tableContext);
       entry.appendChild(el("div", { class: "jdt-details" }, timeStr));
 
       log.appendChild(entry);
       log.scrollTop = log.scrollHeight;
 
-      pushHistory({
+      if (skipHistory) return;
+
+      var item = {
         kind: "bestof2",
         expr: expr,
         chosen_total: chosenTotal,
@@ -335,18 +446,22 @@
         mode: mode,
         mod: mod,
         time: timeStr,
-      });
+      };
+      if (tableContext) item.table_context = tableContext;
+      pushHistory(item);
     }
 
     function showHelp() {
       addSystemEntry(
         "Usage: 1d6, d4, 2d8+1",
-        "Click linked dice like 1d20+5 or bracket modifiers like [+1] (rolls d20+1). Commands: /help, /clear",
+        "Click linked dice like 1d20+5 or bracket modifiers like [+1] (rolls d20+1). Clicking a table die (e.g. 1d12) shows the matching row. Commands: /help, /clear",
         nowTime()
       );
     }
 
-    function doRoll(raw) {
+    function doRoll(raw, meta) {
+      meta = meta || {};
+      var anchor = meta.anchor || null;
       var p = parseExpr(raw);
       if (p.kind === "empty") return;
       if (p.kind === "help") return showHelp();
@@ -377,14 +492,15 @@
           rightLabel,
           p.mod,
           nowTime(),
-          mode
+          mode,
+          getLookupTableContext(anchor, chosenTotal)
         );
         return;
       }
 
       var r = rollDice(p.count, p.sides);
       var total = r.total + p.mod;
-      addRollEntry(p.normalized, total, r.rolls, p.mod, nowTime());
+      addRollEntry(p.normalized, total, r.rolls, p.mod, nowTime(), getLookupTableContext(anchor, total));
     }
 
     toggle.addEventListener("click", function () {
@@ -446,7 +562,7 @@
       if (!expr) return;
       e.preventDefault();
       setExpanded(true);
-      doRoll(expr);
+      doRoll(expr, { anchor: a });
     });
 
     // Public API

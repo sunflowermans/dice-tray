@@ -120,6 +120,35 @@
   font-size: 12px;
 }
 
+#jekyll-dice-tray .jdt-table-context {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.08);
+}
+
+#jekyll-dice-tray .jdt-table-row {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(0, 0, 0, 0.72);
+}
+
+#jekyll-dice-tray .jdt-table-row + .jdt-table-row {
+  margin-top: 2px;
+}
+
+#jekyll-dice-tray .jdt-table-header {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.55);
+}
+
+#jekyll-dice-tray .jdt-table-sep {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+#jekyll-dice-tray .jdt-table-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
 a.dice-tray-roll {
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -166,6 +195,22 @@ a.dice-tray-roll:visited {
 
   #jekyll-dice-tray .jdt-entry .jdt-details {
     color: rgba(255, 255, 255, 0.6);
+  }
+
+  #jekyll-dice-tray .jdt-table-context {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
+
+  #jekyll-dice-tray .jdt-table-row {
+    color: rgba(255, 255, 255, 0.78);
+  }
+
+  #jekyll-dice-tray .jdt-table-header {
+    color: rgba(255, 255, 255, 0.62);
+  }
+
+  #jekyll-dice-tray .jdt-table-sep {
+    color: rgba(255, 255, 255, 0.48);
   }
 
   #jekyll-dice-tray .jdt-result .jdt-rolls {
