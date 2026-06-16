@@ -132,6 +132,10 @@
         .trim();
     }
 
+    function cellInnerHtml(node) {
+      return node && node.innerHTML ? node.innerHTML.trim() : "";
+    }
+
     function findTableHeaderRow(table) {
       if (!table) return null;
       var thead = table.querySelector("thead");
@@ -198,9 +202,13 @@
       var columns = [];
 
       for (var c = 0; c < valueCells.length; c++) {
+        var headerCell = headerCells[c];
+        var valueCell = valueCells[c];
         columns.push({
-          header: headerCells[c] ? normalizeCellText(headerCells[c]) : "",
-          value: normalizeCellText(valueCells[c]),
+          header: headerCell ? normalizeCellText(headerCell) : "",
+          header_html: headerCell ? cellInnerHtml(headerCell) : "",
+          value: normalizeCellText(valueCell),
+          value_html: cellInnerHtml(valueCell),
         });
       }
 
@@ -212,13 +220,19 @@
 
       var ctx = el("div", { class: "jdt-table-context" });
       tableContext.columns.forEach(function (col) {
-        if (!col || !col.value) return;
+        if (!col || (!col.value && !col.value_html)) return;
         var line = el("div", { class: "jdt-table-row" });
-        if (col.header) {
-          line.appendChild(el("span", { class: "jdt-table-header" }, col.header));
+        if (col.header || col.header_html) {
+          var headerSpan = el("span", { class: "jdt-table-header" });
+          if (col.header_html) headerSpan.innerHTML = col.header_html;
+          else headerSpan.textContent = col.header;
+          line.appendChild(headerSpan);
           line.appendChild(el("span", { class: "jdt-table-sep" }, ": "));
         }
-        line.appendChild(el("span", { class: "jdt-table-value" }, col.value));
+        var valueSpan = el("span", { class: "jdt-table-value" });
+        if (col.value_html) valueSpan.innerHTML = col.value_html;
+        else valueSpan.textContent = col.value || "";
+        line.appendChild(valueSpan);
         ctx.appendChild(line);
       });
       if (ctx.childNodes.length) entry.appendChild(ctx);

@@ -146,7 +146,25 @@
 }
 
 #jekyll-dice-tray .jdt-table-value {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: inherit;
+}
+
+#jekyll-dice-tray .jdt-table-value a,
+#jekyll-dice-tray .jdt-table-header a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+#jekyll-dice-tray .jdt-table-value a.dice-tray-roll {
+  color: #ff0000;
+}
+
+#jekyll-dice-tray .jdt-table-value a:visited {
+  color: inherit;
+}
+
+#jekyll-dice-tray .jdt-table-value a.dice-tray-roll:visited {
+  color: #ff0000;
 }
 
 a.dice-tray-roll {
