@@ -7,6 +7,8 @@ A Jekyll plugin gem that:
 - Clicking a lookup-table die in the header row (e.g. `1d12`) rolls and shows the matching row
 - Persists input history, result history, minimize status
 
+https://github.com/user-attachments/assets/6ef8d788-a1ee-49d4-ab26-f63899bb4a10
+
 ## Install
 
 Add to your site `Gemfile`:
