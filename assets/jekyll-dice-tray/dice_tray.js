@@ -172,13 +172,26 @@
       return table.querySelector("tr");
     }
 
-    function firstColumnNumber(row) {
+    function parseFirstColumnEntry(text) {
+      if (!text) return null;
+      var normalized = text.replace(/[\u2013\u2014]/g, "-");
+      if (/^\d+$/.test(normalized)) {
+        return { kind: "exact", value: parseInt(normalized, 10) };
+      }
+      var rangeMatch = normalized.match(/^(\d+)\s*-\s*(\d+)$/);
+      if (rangeMatch) {
+        var min = parseInt(rangeMatch[1], 10);
+        var max = parseInt(rangeMatch[2], 10);
+        if (min <= max) return { kind: "range", min: min, max: max };
+      }
+      return null;
+    }
+
+    function firstColumnEntry(row) {
       if (!row) return null;
       var cell = row.querySelector("td, th");
       if (!cell) return null;
-      var text = normalizeCellText(cell);
-      if (!/^\d+$/.test(text)) return null;
-      return parseInt(text, 10);
+      return parseFirstColumnEntry(normalizeCellText(cell));
     }
 
     function isLookupTable(table, headerRow) {
@@ -187,20 +200,25 @@
       var matches = 0;
       for (var i = 0; i < rows.length; i++) {
         if (rows[i] === headerRow) continue;
-        if (firstColumnNumber(rows[i]) !== null) matches++;
+        if (firstColumnEntry(rows[i]) !== null) matches++;
       }
       return matches >= 2;
     }
 
     function findLookupRow(table, headerRow, rollTotal) {
       var rows = table.querySelectorAll("tr");
+      var rangeRow = null;
       for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
         if (row === headerRow) continue;
-        var n = firstColumnNumber(row);
-        if (n !== null && n === rollTotal) return row;
+        var entry = firstColumnEntry(row);
+        if (!entry) continue;
+        if (entry.kind === "exact" && entry.value === rollTotal) return row;
+        if (entry.kind === "range" && !rangeRow && rollTotal >= entry.min && rollTotal <= entry.max) {
+          rangeRow = row;
+        }
       }
-      return null;
+      return rangeRow;
     }
 
     function getLookupTableContext(anchor, rollTotal) {
@@ -534,7 +552,7 @@
     function showHelp() {
       addSystemEntry(
         "Usage: 1d6, d4, 2d8+1, 2-in-6",
-        "Click linked dice like 1d20+5, chance like 2-in-6 (roll d6, 1-2 succeed), or bracket modifiers like [+1] (rolls d20+1). Clicking a table die (e.g. 1d12) shows the matching row. Commands: /help, /clear",
+        "Click linked dice like 1d20+5, chance like 2-in-6 (roll d6, 1-2 succeed), or bracket modifiers like [+1] (rolls d20+1). Clicking a table die (e.g. 1d12) shows the matching row (first column: single number or range like 3-12). Commands: /help, /clear",
         nowTime()
       );
     }
