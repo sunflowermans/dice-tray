@@ -8,10 +8,8 @@ module Jekyll
         cfg = (site.config["dice_tray"] || {})
         return if cfg["enabled"] == false
 
-        assets_path = cfg["assets_path"] || "/assets/jekyll-dice-tray"
-        assets_path = "/#{assets_path}" unless assets_path.start_with?("/")
-
         asset_dir = File.expand_path("../../../assets/jekyll-dice-tray", __dir__)
+        dest_dir = Config.assets_dir(site)
 
         files = {
           "dice_tray.js" => File.join(asset_dir, "dice_tray.js"),
@@ -23,7 +21,7 @@ module Jekyll
           site.static_files << AssetFile.new(
             site,
             site.source,
-            assets_path.sub(%r{\A/}, ""),
+            dest_dir,
             name,
             source_path: source_path
           )

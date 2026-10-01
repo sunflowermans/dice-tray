@@ -2,6 +2,7 @@ require "jekyll"
 require "nokogiri"
 
 require_relative "jekyll/dice_tray/version"
+require_relative "jekyll/dice_tray/config"
 require_relative "jekyll/dice_tray/asset_file"
 require_relative "jekyll/dice_tray/generator"
 require_relative "jekyll/dice_tray/html_rewriter"

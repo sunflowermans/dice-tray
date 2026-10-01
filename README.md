@@ -31,7 +31,7 @@ Optional `_config.yml` settings:
 ```yml
 dice_tray:
   enabled: true
-  assets_path: /assets/jekyll-dice-tray
+  assets_path: /assets/jekyll-dice-tray  # prefixed with site baseurl automatically
   inject_tray: true
   link_dice_in_markdown: true
 ```
