@@ -628,6 +628,20 @@
       saveHistory(history);
     }
 
+    function flashNewEntry(entry, skipHistory) {
+      if (skipHistory || !entry) return;
+      entry.classList.add("jdt-flash");
+      var cleared = false;
+      function clearFlash() {
+        if (cleared) return;
+        cleared = true;
+        entry.classList.remove("jdt-flash");
+        entry.removeEventListener("animationend", clearFlash);
+      }
+      entry.addEventListener("animationend", clearFlash);
+      setTimeout(clearFlash, 500);
+    }
+
     function addSystemEntry(title, body, timeStr) {
       var entry = el("div", { class: "jdt-entry" });
       entry.appendChild(el("div", { class: "jdt-expr" }, title));
@@ -656,6 +670,7 @@
 
       log.appendChild(entry);
       log.scrollTop = log.scrollHeight;
+      flashNewEntry(entry, skipHistory);
 
       if (skipHistory) return;
 
@@ -688,6 +703,7 @@
 
       log.appendChild(entry);
       log.scrollTop = log.scrollHeight;
+      flashNewEntry(entry, skipHistory);
 
       if (skipHistory) return;
 
@@ -731,6 +747,7 @@
 
       log.appendChild(entry);
       log.scrollTop = log.scrollHeight;
+      flashNewEntry(entry, skipHistory);
 
       if (skipHistory) return;
 
