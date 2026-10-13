@@ -48,6 +48,7 @@
     if (!s) return { kind: "empty" };
     if (s === "/help") return { kind: "help" };
     if (s === "/clear") return { kind: "clear" };
+    if (s === "/v" || s === "/version") return { kind: "version" };
 
     // Allow whitespace variations like "d20 + 2"
     var compact = s.replace(/\s+/g, "");
@@ -773,9 +774,14 @@
     function showHelp() {
       addSystemEntry(
         "Usage: 1d6, d4, 2d8+1, 2-in-6",
-        "Click linked dice like 1d20+5, chance like 2-in-6 (roll d6, 1-2 succeed), or bracket modifiers like [+1] (rolls d20+1). Clicking a table die (any dN) shows the matching entry (number or range; any number of side-by-side key/value column groups; headers optional). Commands: /help, /clear",
+        "Click linked dice like 1d20+5, chance like 2-in-6 (roll d6, 1-2 succeed), or bracket modifiers like [+1] (rolls d20+1). Clicking a table die (any dN) shows the matching entry (number or range; any number of side-by-side key/value column groups; headers optional). Commands: /help, /clear, /v, /version",
         nowTime()
       );
+    }
+
+    function showVersion() {
+      var version = root.getAttribute("data-version") || "unknown";
+      addSystemEntry("dice tray " + version, "", nowTime());
     }
 
     function doRoll(raw, meta) {
@@ -785,6 +791,7 @@
       if (p.kind === "empty") return;
       if (p.kind === "help") return showHelp();
       if (p.kind === "clear") return clearStorageAndUi();
+      if (p.kind === "version") return showVersion();
       if (p.kind !== "roll" && p.kind !== "bestof2" && p.kind !== "chance") {
         addSystemEntry("Unrecognized roll: " + p.raw, "Try: 1d6, d4, 2-in-6, 2d8+1 or /help", nowTime());
         return;

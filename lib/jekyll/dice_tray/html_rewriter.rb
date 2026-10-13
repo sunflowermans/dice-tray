@@ -200,7 +200,7 @@ module Jekyll
         return html if html.include?('data-dice-tray-root="true"')
 
         tray = <<~HTML
-          <div id="jekyll-dice-tray" data-dice-tray-root="true" aria-live="polite">
+          <div id="jekyll-dice-tray" data-dice-tray-root="true" data-version="#{VERSION}" aria-live="polite">
             <div class="jdt-header">
               <button type="button" class="jdt-toggle" aria-expanded="false" title="Toggle dice tray">Dice</button>
             </div>
