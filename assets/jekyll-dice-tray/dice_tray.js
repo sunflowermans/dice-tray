@@ -179,14 +179,6 @@
       return Array.prototype.slice.call(row.querySelectorAll("td, th"));
     }
 
-    function cellColumnIndex(row, cell) {
-      var cells = rowCells(row);
-      for (var i = 0; i < cells.length; i++) {
-        if (cells[i] === cell) return i;
-      }
-      return -1;
-    }
-
     function rowLooksLikeHeader(row) {
       if (!row) return false;
       if (row.querySelector("th")) return true;
@@ -269,13 +261,11 @@
       return max;
     }
 
-    function collectRowEntriesForGroups(row, groups, allowedKeyIndices) {
+    function collectRowEntriesForGroups(row, groups) {
       var cells = rowCells(row);
       var entries = [];
-      var allowAll = !allowedKeyIndices || !allowedKeyIndices.length;
       for (var g = 0; g < groups.length; g++) {
         var group = groups[g];
-        if (!allowAll && allowedKeyIndices.indexOf(group.keyIndex) === -1) continue;
         var keyCell = cells[group.keyIndex];
         if (!keyCell) continue;
         var key = parseKeyEntry(normalizeCellText(keyCell));
@@ -302,16 +292,17 @@
       if (!table || !groups || !groups.length) return false;
       var matches = 0;
       eachDataRow(table, headerRow, function (row) {
-        matches += collectRowEntriesForGroups(row, groups, null).length;
+        matches += collectRowEntriesForGroups(row, groups).length;
       });
       return matches >= 2;
     }
 
-    function findLookupMatch(table, headerRow, groups, rollTotal, allowedKeyIndices) {
+    // Header dice (one or many side-by-side) always search every key column in the table.
+    function findLookupMatch(table, headerRow, groups, rollTotal) {
       var exact = null;
       var range = null;
       eachDataRow(table, headerRow, function (row) {
-        var entries = collectRowEntriesForGroups(row, groups, allowedKeyIndices);
+        var entries = collectRowEntriesForGroups(row, groups);
         for (var e = 0; e < entries.length; e++) {
           var entry = entries[e];
           if (entry.key.kind === "exact" && entry.key.value === rollTotal) {
@@ -329,45 +320,18 @@
       return exact || range;
     }
 
-    function headerDiceCount(headerRow) {
-      if (!headerRow) return 0;
-      return headerRow.querySelectorAll('a[data-dice]').length;
-    }
-
-    function groupForColumn(groups, columnIndex) {
-      for (var g = 0; g < groups.length; g++) {
-        var group = groups[g];
-        if (columnIndex === group.keyIndex) return group;
-        if (group.valueIndices.indexOf(columnIndex) !== -1) return group;
-      }
-      return null;
-    }
-
-    // One die in the header (e.g. d100 over many pairs) => search every group.
-    // Several dice (e.g. d10 | Weather | d10 | Terrain | d6 | Mood) => only the clicked group.
-    function allowedKeyIndicesForClick(headerRow, clickCell, groups) {
-      if (!headerRow || !clickCell || !groups.length) return null;
-      if (headerDiceCount(headerRow) <= 1) return null;
-      var col = cellColumnIndex(headerRow, clickCell);
-      if (col < 0) return null;
-      var group = groupForColumn(groups, col);
-      return group ? [group.keyIndex] : null;
-    }
-
     function getLookupTableContext(anchor, rollTotal) {
       if (!anchor || !anchor.closest || rollTotal == null) return null;
 
       var cell = null;
       var table = null;
       var headerRow = null;
-      var allowedKeys = null;
       var sourceTable = anchor._jdtSourceTable;
 
       if (sourceTable && sourceTable.querySelector) {
         // Re-roll from a previous table result in the tray.
         table = sourceTable;
         headerRow = findTableHeaderRow(table);
-        allowedKeys = anchor._jdtAllowedKeyIndices || null;
       } else {
         cell = anchor.closest("td, th");
         if (!cell) return null;
@@ -384,10 +348,7 @@
       var groups = buildColumnGroups(keyColumns, tableColumnCount(table, headerRow));
       if (!isLookupTable(table, headerRow, groups)) return null;
 
-      if (allowedKeys == null && cell && headerRow) {
-        allowedKeys = allowedKeyIndicesForClick(headerRow, cell, groups);
-      }
-      var matched = findLookupMatch(table, headerRow, groups, rollTotal, allowedKeys);
+      var matched = findLookupMatch(table, headerRow, groups, rollTotal);
       if (!matched) return null;
 
       var headerCells = headerRow ? rowCells(headerRow) : [];
@@ -420,9 +381,7 @@
         });
       }
 
-      return columns.length
-        ? { columns: columns, _sourceTable: table, _allowedKeyIndices: allowedKeys }
-        : null;
+      return columns.length ? { columns: columns, _sourceTable: table } : null;
     }
 
     function serializableTableContext(tableContext) {
@@ -458,9 +417,6 @@
             );
             if (tableContext._sourceTable && tableContext._sourceTable.querySelector) {
               reroll._jdtSourceTable = tableContext._sourceTable;
-            }
-            if (tableContext._allowedKeyIndices) {
-              reroll._jdtAllowedKeyIndices = tableContext._allowedKeyIndices;
             }
             headerSpan.appendChild(reroll);
           } else if (col.header_html) {
