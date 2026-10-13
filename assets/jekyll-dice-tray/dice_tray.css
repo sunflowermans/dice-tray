@@ -163,7 +163,8 @@
   text-underline-offset: 2px;
 }
 
-#jekyll-dice-tray .jdt-table-value a.dice-tray-roll {
+#jekyll-dice-tray .jdt-table-value a.dice-tray-roll,
+#jekyll-dice-tray .jdt-table-header a.dice-tray-roll {
   color: #ff0000;
 }
 
@@ -171,7 +172,8 @@
   color: inherit;
 }
 
-#jekyll-dice-tray .jdt-table-value a.dice-tray-roll:visited {
+#jekyll-dice-tray .jdt-table-value a.dice-tray-roll:visited,
+#jekyll-dice-tray .jdt-table-header a.dice-tray-roll:visited {
   color: #ff0000;
 }
 
