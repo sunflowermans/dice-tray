@@ -354,21 +354,6 @@
       return group ? [group.keyIndex] : null;
     }
 
-    function findFollowingTable(node) {
-      var elNode = node;
-      while (elNode && elNode !== document.body) {
-        var sib = elNode.nextElementSibling;
-        while (sib) {
-          if (sib.tagName === "TABLE") return sib;
-          var nested = sib.querySelector && sib.querySelector("table");
-          if (nested) return nested;
-          sib = sib.nextElementSibling;
-        }
-        elNode = elNode.parentElement;
-      }
-      return null;
-    }
-
     function getLookupTableContext(anchor, rollTotal) {
       if (!anchor || !anchor.closest || rollTotal == null) return null;
 
@@ -385,18 +370,13 @@
         allowedKeys = anchor._jdtAllowedKeyIndices || null;
       } else {
         cell = anchor.closest("td, th");
-        if (cell) {
-          table = cell.closest("table");
-          if (!table) return null;
-          headerRow = findTableHeaderRow(table);
-          // With a header, only header-cell dice trigger lookup (data cells may contain other dice).
-          // Without a header, any in-table die can trigger lookup.
-          if (headerRow && !headerRow.contains(cell)) return null;
-        } else {
-          table = findFollowingTable(anchor);
-          if (!table) return null;
-          headerRow = findTableHeaderRow(table);
-        }
+        if (!cell) return null;
+        table = cell.closest("table");
+        if (!table) return null;
+        headerRow = findTableHeaderRow(table);
+        // With a header, only header-cell dice trigger lookup (data cells may contain other dice).
+        // Without a header, any in-table die can trigger lookup.
+        if (headerRow && !headerRow.contains(cell)) return null;
       }
 
       var keyColumns = inferKeyColumns(table, headerRow);
@@ -774,7 +754,7 @@
     function showHelp() {
       addSystemEntry(
         "Usage: 1d6, d4, 2d8+1, 2-in-6",
-        "Type the dice you want to roll, without a prefix. Click linked dice notation from text or in a table to show the matching entry (number or range).",
+        "Type the dice you want to roll, without a prefix. Click linked dice notation in a table to show the matching entry (number or range).",
         "Commands: /help, /clear, /version",
         nowTime()
       );
