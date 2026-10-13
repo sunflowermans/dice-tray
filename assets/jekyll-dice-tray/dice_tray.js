@@ -46,9 +46,9 @@
   function parseExpr(input) {
     var s = String(input || "").trim();
     if (!s) return { kind: "empty" };
-    if (s === "/help") return { kind: "help" };
-    if (s === "/clear") return { kind: "clear" };
-    if (s === "/v" || s === "/version") return { kind: "version" };
+    if (s === "/help" || s === "/h") return { kind: "help" };
+    if (s === "/clear" || s === "/c") return { kind: "clear" };
+    if (s === "/version" || s === "/v") return { kind: "version" };
 
     // Allow whitespace variations like "d20 + 2"
     var compact = s.replace(/\s+/g, "");
@@ -774,7 +774,8 @@
     function showHelp() {
       addSystemEntry(
         "Usage: 1d6, d4, 2d8+1, 2-in-6",
-        "Click linked dice like 1d20+5, chance like 2-in-6 (roll d6, 1-2 succeed), or bracket modifiers like [+1] (rolls d20+1). Clicking a table die (any dN) shows the matching entry (number or range; any number of side-by-side key/value column groups; headers optional). Commands: /help, /clear, /v, /version",
+        "Type the dice you want to roll, without a prefix. Click linked dice notation from text or in a table to show the matching entry (number or range).",
+        "Commands: /help, /clear, /version",
         nowTime()
       );
     }
