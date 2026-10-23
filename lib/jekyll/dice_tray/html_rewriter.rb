@@ -207,7 +207,7 @@ module Jekyll
         tray = <<~HTML
           <div id="jekyll-dice-tray" data-dice-tray-root="true" data-version="#{VERSION}" data-expanded="false" aria-live="polite">
             <div class="jdt-header">
-              <button type="button" class="jdt-toggle" aria-expanded="false" title="Toggle dice tray">Dice</button>
+              <button type="button" class="jdt-toggle" aria-expanded="false" title="Toggle dice tray (~)">Dice</button>
             </div>
             <div class="jdt-body" hidden style="display:none">
               <div class="jdt-clue">Type <code>1d20+5</code> or <code>/help</code>, then press Enter.</div>
