@@ -34,13 +34,16 @@
   border-radius: 12px;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
   overflow: hidden;
-  display: flex;
+  /* Stay collapsed until data-expanded="true". A default of flex overrides the
+     hidden attribute and paints the open tray before hydration. */
+  display: none;
   flex-direction: column;
   max-height: 360px;
 }
 
-#jekyll-dice-tray[data-expanded="false"] .jdt-body {
-  display: none;
+/* Only the pre-paint script or dice_tray.js sets this; absent means minimized. */
+#jekyll-dice-tray[data-expanded="true"] .jdt-body {
+  display: flex;
 }
 
 #jekyll-dice-tray .jdt-clue {
