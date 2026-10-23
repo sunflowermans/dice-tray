@@ -529,7 +529,32 @@
         setTimeout(function () {
           input && input.focus();
         }, 0);
+      } else if (input && document.activeElement === input) {
+        input.blur();
       }
+    }
+
+    function isOtherTextEntry(node) {
+      if (!node || node === input) return false;
+      var el = node.nodeType === 1 ? node : node.parentElement;
+      if (!el) return false;
+      if (el.closest && el.closest("#jekyll-dice-tray")) return false;
+      var tag = el.tagName;
+      if (tag === "TEXTAREA") return true;
+      if (tag === "INPUT") {
+        var type = (el.getAttribute("type") || "text").toLowerCase();
+        return (
+          type !== "button" &&
+          type !== "submit" &&
+          type !== "reset" &&
+          type !== "checkbox" &&
+          type !== "radio" &&
+          type !== "file" &&
+          type !== "color" &&
+          type !== "range"
+        );
+      }
+      return !!el.isContentEditable;
     }
 
     function renderHistory() {
@@ -787,6 +812,15 @@
     toggle.addEventListener("click", function () {
       var expanded = toggle.getAttribute("aria-expanded") === "true";
       setExpanded(!expanded);
+    });
+
+    document.addEventListener("keydown", function (e) {
+      if (e.defaultPrevented || e.repeat || e.isComposing) return;
+      if (e.key !== "~" && e.key !== "`") return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (isOtherTextEntry(e.target)) return;
+      e.preventDefault();
+      setExpanded(toggle.getAttribute("aria-expanded") !== "true");
     });
 
     input.addEventListener("keydown", function (e) {
