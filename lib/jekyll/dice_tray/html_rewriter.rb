@@ -199,18 +199,42 @@ module Jekyll
       def self.inject_tray(html, assets_path:)
         return html if html.include?('data-dice-tray-root="true"')
 
+        # Start collapsed. Inline display:none holds the body shut until the script
+        # below runs: the hidden attribute loses to author CSS (including ours), and
+        # the deferred dice_tray.js can run after first paint, which flashes the
+        # open tray on navigation. This script reads the same localStorage key as
+        # STORAGE_EXPANDED in dice_tray.js and applies it before first paint.
         tray = <<~HTML
-          <div id="jekyll-dice-tray" data-dice-tray-root="true" data-version="#{VERSION}" aria-live="polite">
+          <div id="jekyll-dice-tray" data-dice-tray-root="true" data-version="#{VERSION}" data-expanded="false" aria-live="polite">
             <div class="jdt-header">
               <button type="button" class="jdt-toggle" aria-expanded="false" title="Toggle dice tray">Dice</button>
             </div>
-            <div class="jdt-body" hidden>
+            <div class="jdt-body" hidden style="display:none">
               <div class="jdt-clue">Type <code>1d20+5</code> or <code>/help</code>, then press Enter.</div>
               <div class="jdt-log" role="log" aria-label="Dice roll log"></div>
               <input class="jdt-input" type="text" inputmode="text" autocomplete="off" spellcheck="false"
                 placeholder="Roll: 1d6, d4, 2d8+1, /help" />
             </div>
           </div>
+          <script>
+          // Synchronous on purpose: must finish before the browser paints the tray.
+          (function () {
+            try {
+              // Keep in sync with STORAGE_EXPANDED in dice_tray.js.
+              var expanded = localStorage.getItem("jekyll_dice_tray:expanded") === "true";
+              var root = document.getElementById("jekyll-dice-tray");
+              if (!root) return;
+              root.setAttribute("data-expanded", expanded ? "true" : "false");
+              var toggle = root.querySelector(".jdt-toggle");
+              if (toggle) toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+              var body = root.querySelector(".jdt-body");
+              if (!body) return;
+              body.hidden = !expanded;
+              // Inline display wins over theme rules that override [hidden].
+              body.style.display = expanded ? "flex" : "none";
+            } catch (e) {}
+          })();
+          </script>
         HTML
 
         tags = <<~HTML

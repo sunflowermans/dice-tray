@@ -2,6 +2,7 @@
   "use strict";
 
   var STORAGE_PREFIX = "jekyll_dice_tray:";
+  // Also read before first paint by the inline script in HtmlRewriter.inject_tray.
   var STORAGE_EXPANDED = STORAGE_PREFIX + "expanded";
   var STORAGE_HISTORY = STORAGE_PREFIX + "history_v1";
   var STORAGE_INPUT_HISTORY = STORAGE_PREFIX + "input_history_v1";
@@ -521,6 +522,7 @@
       root.setAttribute("data-expanded", expanded ? "true" : "false");
       // Some themes override [hidden], so enforce display too.
       body.hidden = !expanded;
+      // Clear the pre-paint inline lock so the expanded stylesheet rule can show the body.
       body.style.display = expanded ? "" : "none";
       saveBool(STORAGE_EXPANDED, expanded);
       if (expanded) {
